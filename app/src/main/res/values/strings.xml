@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">Hello Space</string>
+    <string name="scan_button">Toggle Scan</string>
+    <string name="send_button">Send Message</string>
+    <string name="quality_text_view">Quality: %d</string>
+    <string name="battery_text_view">Battery: %d</string>
+    <string name="connection_state_text_view">Connection: %s</string>
+    <string name="activity_state_text_view">Activity: %s</string>
+    <string name="payload_events_text_view">Payload Events:</string>
+</resources>
