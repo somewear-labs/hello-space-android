@@ -2,7 +2,6 @@
 
 buildscript {
     repositories {
-        mavenLocal()
         google()
         jcenter()
     }
@@ -16,13 +15,12 @@ buildscript {
 
 allprojects {
     repositories {
-//        mavenLocal()
         google()
         jcenter()
         maven {
             credentials {
-                username 'guest'
-                password 'someguestpassword'
+                username somewearArtifactsUsername
+                password somewearArtifactsPassword
             }
             url "https://somewear-artifacts.appspot.com"
         }
