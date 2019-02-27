@@ -177,3 +177,30 @@ protected void onCreate(Bundle savedInstanceState) {
     );
 }
 ```
+
+### Logging
+The SDK uses SLF4J-Android for logging. To enable logging, add a SLF4J compatible logging framework, such as [Logback](https://github.com/tony19/logback-android): 
+```groovy
+dependencies {
+    ...
+    implementation 'com.github.tony19:logback-android:1.3.0-3'
+    ...
+}
+```
+Add to `src/main/assets/logback.xml`
+```xml
+<configuration>
+    <appender name="logcat" class="ch.qos.logback.classic.android.LogcatAppender">
+        <tagEncoder>
+            <pattern>%logger{12}</pattern>
+        </tagEncoder>
+        <encoder>
+            <pattern>[%-20thread] %msg</pattern>
+        </encoder>
+    </appender>
+
+    <root level="DEBUG">
+        <appender-ref ref="logcat" />
+    </root>
+</configuration>
+```
