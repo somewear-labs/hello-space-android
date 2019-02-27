@@ -2,8 +2,8 @@ package com.somewearlabs.hellospace;
 
 import android.app.Application;
 
-import com.somewearlabs.somewearcore.api.SomewearDevice;
 import com.somewearlabs.somewearcore.api.SomewearProperties;
+import com.somewearlabs.somewearui.api.SomewearUI;
 
 public class DemoApplication extends Application {
 
@@ -11,8 +11,8 @@ public class DemoApplication extends Application {
     public void onCreate() {
         super.onCreate();
 
-        // Initialize SomewearDevice
-        SomewearProperties properties = new SomewearProperties(this, DeviceNotificationActivity.class);
-        SomewearDevice.setup(properties);
+        // Initialize SomewearUI
+        SomewearProperties properties = new SomewearProperties(this);
+        SomewearUI.setup(properties);
     }
 }

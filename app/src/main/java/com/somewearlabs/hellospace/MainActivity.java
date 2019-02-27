@@ -39,7 +39,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         Button scanButton = findViewById(R.id.scanButton);
-        scanButton.setOnClickListener(v -> toggleDeviceScan());
+        scanButton.setOnClickListener(v -> somewearUI.toggleScan(this));
 
         Button sendButton = findViewById(R.id.sendButton);
         sendButton.setOnClickListener(v -> sendMessage());
@@ -107,10 +107,6 @@ public class MainActivity extends AppCompatActivity {
         super.onDestroy();
     }
 
-    private void toggleDeviceScan() {
-        somewearUI.toggleScan(this);
-    }
-
     private void sendMessage() {
         String message = "Hello from space!";
         byte[] data = message.getBytes(StandardCharsets.UTF_8);
@@ -122,8 +118,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void didReceivePayload(DevicePayload payload) {
-        if (payload.getStatus() == DevicePayloadStatus.None) return;
-
         // When we receive a payload, add an event
         addEvent("id=" + payload.getParcelId() + "; status=" + payload.getStatus());
     }
