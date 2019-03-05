@@ -14,6 +14,7 @@ import android.widget.TextView;
 import com.somewearlabs.somewearcore.api.DeviceConnectionState;
 import com.somewearlabs.somewearcore.api.DevicePayload;
 import com.somewearlabs.somewearcore.api.SomewearDevice;
+import com.somewearlabs.somewearcore.api.SomewearDeviceCallback;
 import com.somewearlabs.uisupport.api.SomewearUI;
 
 import java.nio.charset.StandardCharsets;
@@ -28,6 +29,7 @@ import io.reactivex.disposables.CompositeDisposable;
 public class MainActivity extends AppCompatActivity {
 
     private SomewearDevice device = SomewearDevice.getInstance();
+    private SomewearDeviceCallback deviceCallback = device.callback();
     private SomewearUI somewearUI = SomewearUI.getInstance();
     private CompositeDisposable disposable = new CompositeDisposable();
     private List<String> payloadEvents = new ArrayList<>();
@@ -54,6 +56,9 @@ public class MainActivity extends AppCompatActivity {
 
         // Display firmware update dialogs as required
         somewearUI.configureFirmwareUpdateHandling(this);
+
+        // Observe payload changes
+        deviceCallback.registerAsPayloadListener(this::didReceivePayload);
 
         disposable.addAll(
                 // Observe connectivity changes
@@ -91,17 +96,14 @@ public class MainActivity extends AppCompatActivity {
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(activityState -> {
                             activityTextView.setText(getString(R.string.activity_state_text_view, activityState));
-                        }),
-
-                // Observe payload changes
-                device.getPayload()
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(this::didReceivePayload)
+                        })
         );
     }
 
     @Override
     protected void onDestroy() {
+        // Unregister any callbacks/observers
+        deviceCallback.unregisterPayloadListener();
         disposable.clear();
         super.onDestroy();
     }
