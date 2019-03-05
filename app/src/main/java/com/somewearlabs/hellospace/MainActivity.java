@@ -1,6 +1,10 @@
 package com.somewearlabs.hellospace;
 
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -9,9 +13,8 @@ import android.widget.TextView;
 
 import com.somewearlabs.somewearcore.api.DeviceConnectionState;
 import com.somewearlabs.somewearcore.api.DevicePayload;
-import com.somewearlabs.somewearcore.api.DevicePayloadStatus;
 import com.somewearlabs.somewearcore.api.SomewearDevice;
-import com.somewearlabs.somewearui.api.SomewearUI;
+import com.somewearlabs.uisupport.api.SomewearUI;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -19,10 +22,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 

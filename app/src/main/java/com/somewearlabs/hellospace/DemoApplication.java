@@ -2,8 +2,9 @@ package com.somewearlabs.hellospace;
 
 import android.app.Application;
 
-import com.somewearlabs.somewearcore.api.SomewearProperties;
-import com.somewearlabs.somewearui.api.SomewearUI;
+import com.somewearlabs.uisupport.api.SomewearUI;
+import com.somewearlabs.uisupport.api.SomewearUIProperties;
+
 
 public class DemoApplication extends Application {
 
@@ -12,7 +13,7 @@ public class DemoApplication extends Application {
         super.onCreate();
 
         // Initialize SomewearUI
-        SomewearProperties properties = new SomewearProperties(this);
+        SomewearUIProperties properties = new SomewearUIProperties(this);
         SomewearUI.setup(properties);
     }
 }
