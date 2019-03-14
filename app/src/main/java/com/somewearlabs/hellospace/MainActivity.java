@@ -11,6 +11,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 
+import com.somewearlabs.somewearcore.api.DataPayload;
 import com.somewearlabs.somewearcore.api.DeviceConnectionState;
 import com.somewearlabs.somewearcore.api.DevicePayload;
 import com.somewearlabs.somewearcore.api.SomewearDevice;
@@ -39,16 +40,8 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Button scanButton = findViewById(R.id.scanButton);
-        scanButton.setOnClickListener(v -> somewearUI.toggleScan(this));
-
         Button sendButton = findViewById(R.id.sendButton);
         sendButton.setOnClickListener(v -> sendMessage());
-
-        TextView qualityTextView = findViewById(R.id.qualityTextView);
-        TextView batteryTextView = findViewById(R.id.batteryTextView);
-        TextView connectionStateTextView = findViewById(R.id.connectionStateTextView);
-        TextView activityTextView = findViewById(R.id.activityTextView);
 
         RecyclerView eventsRecyclerView = findViewById(R.id.eventsRecyclerView);
         eventsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -68,34 +61,6 @@ public class MainActivity extends AppCompatActivity {
                             // Hide sendButton when not connected
                             boolean isVisible = connectionState == DeviceConnectionState.Connected;
                             sendButton.setVisibility(isVisible ? View.VISIBLE : View.INVISIBLE);
-                        }),
-
-                // Observe quality changes
-                device.getQuality()
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(quality -> {
-                            qualityTextView.setText(getString(R.string.quality_text_view, quality));
-                        }),
-
-                // Observe battery changes
-                device.getBattery()
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(battery -> {
-                            batteryTextView.setText(getString(R.string.battery_text_view, battery));
-                        }),
-
-                // Observe connection state changes
-                device.getConnectionState()
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(connectionState -> {
-                            connectionStateTextView.setText(getString(R.string.connection_state_text_view, connectionState));
-                        }),
-
-                // Observe activity state changes
-                device.getActivityState()
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(activityState -> {
-                            activityTextView.setText(getString(R.string.activity_state_text_view, activityState));
                         })
         );
     }
@@ -111,7 +76,7 @@ public class MainActivity extends AppCompatActivity {
     private void sendMessage() {
         String message = "Hello from space!";
         byte[] data = message.getBytes(StandardCharsets.UTF_8);
-        DevicePayload payload = DevicePayload.build(data);
+        DevicePayload payload = DataPayload.build(data);
         device.sendData(payload);
 
         // Add a send event

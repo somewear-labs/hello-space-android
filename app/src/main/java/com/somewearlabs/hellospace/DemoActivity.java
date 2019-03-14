@@ -1,11 +1,7 @@
 package com.somewearlabs.hellospace;
 
-import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.bluetooth.BluetoothAdapter;
-import android.content.Intent;
-import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.LinearLayoutManager;
@@ -16,6 +12,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 
+import com.somewearlabs.somewearcore.api.DataPayload;
 import com.somewearlabs.somewearcore.api.DeviceConnectionState;
 import com.somewearlabs.somewearcore.api.DevicePayload;
 import com.somewearlabs.somewearcore.api.FirmwareUpdateStatus;
@@ -43,16 +40,8 @@ public class DemoActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Button scanButton = findViewById(R.id.scanButton);
-        scanButton.setOnClickListener(v -> toggleScan());
-
         Button sendButton = findViewById(R.id.sendButton);
         sendButton.setOnClickListener(v -> sendMessage());
-
-        TextView qualityTextView = findViewById(R.id.qualityTextView);
-        TextView batteryTextView = findViewById(R.id.batteryTextView);
-        TextView connectionStateTextView = findViewById(R.id.connectionStateTextView);
-        TextView activityTextView = findViewById(R.id.activityTextView);
 
         RecyclerView eventsRecyclerView = findViewById(R.id.eventsRecyclerView);
         eventsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -74,34 +63,6 @@ public class DemoActivity extends Activity {
                             sendButton.setVisibility(isVisible ? View.VISIBLE : View.INVISIBLE);
                         }),
 
-                // Observe quality changes
-                device.getQuality()
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(quality -> {
-                            qualityTextView.setText(getString(R.string.quality_text_view, quality));
-                        }),
-
-                // Observe battery changes
-                device.getBattery()
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(battery -> {
-                            batteryTextView.setText(getString(R.string.battery_text_view, battery));
-                        }),
-
-                // Observe connection state changes
-                device.getConnectionState()
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(connectionState -> {
-                            connectionStateTextView.setText(getString(R.string.connection_state_text_view, connectionState));
-                        }),
-
-                // Observe activity state changes
-                device.getActivityState()
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(activityState -> {
-                            activityTextView.setText(getString(R.string.activity_state_text_view, activityState));
-                        }),
-
                 device.getFirmwareUpdateStatus().subscribe()
         );
     }
@@ -117,7 +78,7 @@ public class DemoActivity extends Activity {
     private void sendMessage() {
         String message = "Hello from space!";
         byte[] data = message.getBytes(StandardCharsets.UTF_8);
-        DevicePayload payload = DevicePayload.build(data);
+        DevicePayload payload = DataPayload.build(data);
         device.sendData(payload);
 
         // Add a send event
@@ -146,27 +107,6 @@ public class DemoActivity extends Activity {
         String event = String.format(Locale.getDefault(), "%1$tH:%1$tM:%1$tS %2$s", new Date(), eventMessage);
         payloadEvents.add(0, event);
         eventsAdapter.notifyItemInserted(0);
-    }
-
-    private void toggleScan() {
-        deviceCallback.toggleScan(result -> {
-            switch(result) {
-                case Success:
-                    break;
-                case BleUnsupported:
-                    // if the device doesn't have BLE, we can't use Somewear and the user shouldn't be here anyway
-                    break;
-                case BleDisabled:
-                    Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-                    startActivity(intent);
-                    break;
-                case LocationPermissionRequired:
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                        requestPermissions(new String[] { Manifest.permission.ACCESS_COARSE_LOCATION }, 50);
-                    }
-                    break;
-            }
-        });
     }
 
     private void presentFirmwareUpdateAvailableDialog() {

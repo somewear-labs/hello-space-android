@@ -24,7 +24,7 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.aar'])
 
     // Somewear
-    implementation ('com.somewearlabs:somewear-ui-support:0.9.9')
+    implementation ('com.somewearlabs:somewear-ui-support:0.9.11')
 
     // Android
     implementation 'com.android.support:appcompat-v7:28.0.0'
