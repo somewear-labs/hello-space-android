@@ -2,7 +2,7 @@
 Example Android application using the Somewear SDKs.
 
 # Somewear UI SDK
-The Somewear UI SDK wraps the Somewear Core SDK with UI that is used in the  Somewear Android application. It currently provides permission handling, bluetooth prompts, firmware update dialogs, and firmware update notification handling. You can directly use the Somewear Core SDK instead if your application requirements are not satisfied.
+The Somewear UI SDK wraps the Somewear Core SDK with UI that is used in the  Somewear Android application. It currently provides device scanning, device info, permission handling, bluetooth prompts, firmware update dialogs, and firmware update notification handling. You can directly use the Somewear Core SDK instead if your application requirements are not satisfied.
  
 ## Setup
 1. Add Somewear's Maven Repository to your root `build.gradle`.
@@ -46,7 +46,7 @@ public class MyApplication extends Application {
         super.onCreate();
 
         // Initialize SomewearUI
-        SomewearProperties properties = new SomewearProperties(this);
+        SomewearUIProperties properties = new SomewearUIProperties(this);
         SomewearUI.setup(properties);
     }
 }
@@ -54,20 +54,11 @@ public class MyApplication extends Application {
 
 ### Usage
 
-Scan and pair to a Somewear hotspot:
+Add the status bar view to your layout so the user scan for a Somewear device and see info such as current battery level.
 ```java
-public class MainActivity extends AppCompatActivity {
-
-    private SomewearUI somewearUI = SomewearUI.getInstance();
-  
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        
-        Button scanButton = findViewById(R.id.scanButton);
-        scanButton.setOnClickListener(v -> somewearUI.toggleScan(this));
-    }
-}
+<com.somewearlabs.uisupport.api.SomewearStatusBarView
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content" />
 ```
 
 Handle firmware updates:
@@ -84,15 +75,26 @@ public class MainActivity extends AppCompatActivity {
 }
 ```
 
-Send a payload over satellite:
+Send an SMS message over satellite:
 ```java
 private SomewearDevice device = SomewearDevice.getInstance();
 
-private void sendMessage() {
+private void sendSmsMessage() {
+    String message = "Hello from space!";
+    MessagePayload payload = MessagePayload.build(message, PhoneNumber.build("916-555-1111"));
+    device.sendData(payload);
+}
+```
+
+Send a byte payload over satellite:
+```java
+private SomewearDevice device = SomewearDevice.getInstance();
+
+private void sendBytes() {
     String message = "Hello from space!";
     byte[] data = message.getBytes(StandardCharsets.UTF_8);
-
-    DevicePayload payload = DevicePayload.build(data);
+    
+    DataPayload payload = DataPayload.build(data);
     device.sendData(payload);
 }
 ```
@@ -120,61 +122,15 @@ protected void onDestroy() {
 }
 
 private void didReceivePayload(DevicePayload payload) {
-    Log.d("MyActivity", "Did receive payload: id=" + payload.getParcelId() + "; status=" + payload.getStatus());
-}
-```
-
-Update UI based off device state:
-```java
-@Override
-protected void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
-    setContentView(R.layout.activity_main);
-
-    Button sendButton = findViewById(R.id.sendButton);
-    TextView qualityTextView = findViewById(R.id.qualityTextView);
-    TextView batteryTextView = findViewById(R.id.batteryTextView);
-    TextView connectionStateTextView = findViewById(R.id.connectionStateTextView);
-    TextView activityTextView = findViewById(R.id.activityTextView);
-
-    disposable.addAll(
-            // Observe connectivity changes
-            device.getConnectionState()
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe(connectionState -> {
-                        // Hide sendButton when not connected
-                        boolean isVisible = connectionState == DeviceConnectionState.Connected;
-                        sendButton.setVisibility(isVisible ? View.VISIBLE : View.INVISIBLE);
-                    }),
-
-            // Observe quality changes
-            device.getQuality()
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe(quality -> {
-                        qualityTextView.setText(getString(R.string.quality_text_view, quality));
-                    }),
-
-            // Observe battery changes
-            device.getBattery()
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe(battery -> {
-                        batteryTextView.setText(getString(R.string.battery_text_view, battery));
-                    }),
-
-            // Observe connection state changes
-            device.getConnectionState()
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe(connectionState -> {
-                        connectionStateTextView.setText(getString(R.string.connection_state_text_view, connectionState));
-                    }),
-
-            // Observe activity state changes
-            device.getActivityState()
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe(activityState -> {
-                        activityTextView.setText(getString(R.string.activity_state_text_view, activityState));
-                    })
-    );
+    if (payload instanceof MessagePayload) {
+        MessagePayload messagePayload = (MessagePayload) payload;
+        Log.d("MyActivity", "Did receive message: content=" + messagePayload.getContent() + "; id=" + payload.getParcelId() + "; status=" + payload.getStatus());
+    }
+    else if (payload instanceof DataPayload) {
+        DataPayload dataPayload = (DataPayload) payload;
+        String base64Data = Base64.encodeToString(dataPayload.getData(), Base64.DEFAULT);
+        Log.d("MyActivity", "Did receive data: content=" + base64Data + "; id=" + payload.getParcelId() + "; status=" + payload.getStatus());
+    }
 }
 ```
 
