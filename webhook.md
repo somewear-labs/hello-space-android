@@ -1,5 +1,7 @@
 ## Webhook Sample
 
+The Somewear SDK and Somewear mobile app can be configured to forward a variety of events to your backend application in near real-time via a webhook. Somewear will send these events either over traditional networks or satellite. Below is a sample webhook configuration and JSON payload.
+
 Url: `POST {baseUrl}/somewear`
 
 Content-type: `application/json`
