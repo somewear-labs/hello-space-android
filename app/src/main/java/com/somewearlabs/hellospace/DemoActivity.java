@@ -61,9 +61,7 @@ public class DemoActivity extends Activity {
                             // Hide sendButton when not connected
                             boolean isVisible = connectionState == DeviceConnectionState.Connected;
                             sendButton.setVisibility(isVisible ? View.VISIBLE : View.INVISIBLE);
-                        }),
-
-                device.getFirmwareUpdateStatus().subscribe()
+                        })
         );
     }
 
