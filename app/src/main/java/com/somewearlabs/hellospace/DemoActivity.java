@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.v4.app.FragmentActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -18,6 +19,7 @@ import com.somewearlabs.somewearcore.api.DevicePayload;
 import com.somewearlabs.somewearcore.api.FirmwareUpdateStatus;
 import com.somewearlabs.somewearcore.api.SomewearDevice;
 import com.somewearlabs.somewearcore.api.SomewearDeviceCallback;
+import com.somewearlabs.uisupport.api.SomewearStatusBarView;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -28,7 +30,7 @@ import java.util.Locale;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 
-public class DemoActivity extends Activity {
+public class DemoActivity extends FragmentActivity {
 
     private SomewearDevice device = SomewearDevice.getInstance();
     private SomewearDeviceCallback deviceCallback = device.callback();
@@ -46,6 +48,10 @@ public class DemoActivity extends Activity {
         RecyclerView eventsRecyclerView = findViewById(R.id.eventsRecyclerView);
         eventsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         eventsRecyclerView.setAdapter(eventsAdapter);
+
+        // Configure status bar view
+        SomewearStatusBarView statusBarView = findViewById(R.id.statusBarView);
+        statusBarView.setPresenter(this);
 
         // Observe payload changes
         deviceCallback.registerAsPayloadListener(this::didReceivePayload);
