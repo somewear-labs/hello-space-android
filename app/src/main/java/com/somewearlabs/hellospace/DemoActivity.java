@@ -7,6 +7,7 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.FragmentActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -69,6 +70,8 @@ public class DemoActivity extends FragmentActivity {
                             sendButton.setVisibility(isVisible ? View.VISIBLE : View.INVISIBLE);
                         })
         );
+
+        Log.d("DemoActivity","connectionState=" + device.getConnectionState().getValue().name());
     }
 
     @Override
@@ -84,6 +87,8 @@ public class DemoActivity extends FragmentActivity {
         byte[] data = message.getBytes(StandardCharsets.UTF_8);
         DevicePayload payload = DataPayload.build(data);
         device.sendData(payload);
+
+        Log.d("DemoActivity","connectionState=" + device.getConnectionState().getValue().name());
 
         // Add a send event
         addEvent("id=" + payload.getParcelId() + "; msg=" + message);
