@@ -56,7 +56,7 @@ public class MyApplication extends Application {
 
 Add the status bar view to your layout so the user scan for a Somewear device and see info such as current battery level.
 ```java
-<com.somewearlabs.uisupport.api.SomewearStatusBarView
+<com.somewearlabs.somewearui.api.SomewearStatusBarView
     android:layout_width="match_parent"
     android:layout_height="wrap_content" />
 ```
