@@ -139,7 +139,7 @@ The SDK uses SLF4J-Android for logging. To enable logging, add a SLF4J compatibl
 ```groovy
 dependencies {
     ...
-    implementation 'com.github.tony19:logback-android:1.3.0-3'
+    implementation 'com.github.tony19:logback-android:2.0.0'
     ...
 }
 ```
