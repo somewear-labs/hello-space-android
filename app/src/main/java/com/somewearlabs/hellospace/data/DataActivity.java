@@ -1,38 +1,36 @@
 package com.somewearlabs.hellospace.data;
 
 import android.os.Bundle;
-import android.support.v4.app.FragmentActivity;
-import android.support.v7.widget.DividerItemDecoration;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.widget.Button;
 
-import com.somewearlabs.gen.PackageProto;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.DividerItemDecoration;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.somewearlabs.gen.LocationProto;
 import com.somewearlabs.hellospace.R;
-import com.somewearlabs.hellospace.data.model.Location;
-import com.somewearlabs.hellospace.data.model.Message;
-import com.somewearlabs.hellospace.data.model.ProtoMapper;
 import com.somewearlabs.hellospace.data.model.UserItem;
 import com.somewearlabs.hellospace.data.model.UserItemSource;
 import com.somewearlabs.somewearcore.api.DataPayload;
 import com.somewearlabs.somewearcore.api.DeviceConnectionState;
+import com.somewearlabs.somewearcore.api.MessagePayload;
 import com.somewearlabs.somewearcore.api.SomewearDevice;
-import com.somewearlabs.somewearcore.api.SomewearDeviceCallback;
-import com.somewearlabs.uisupport.api.SomewearStatusBarView;
+import com.somewearlabs.somewearcore.common.EmailAddress;
+import com.somewearlabs.somewearui.api.SomewearStatusBarView;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.disposables.Disposable;
+import io.reactivex.disposables.CompositeDisposable;
 
-public class DataActivity extends FragmentActivity {
+public class DataActivity extends AppCompatActivity {
 
     private SomewearDevice device = SomewearDevice.getInstance();
-    private SomewearDeviceCallback deviceCallback = device.callback();
-    private Disposable disposable;
+    private CompositeDisposable disposable = new CompositeDisposable();
     private UserItemSource userItemSource;
     private SimpleRecyclerViewAdapter recyclerViewAdapter = new SimpleRecyclerViewAdapter();
 
@@ -42,14 +40,13 @@ public class DataActivity extends FragmentActivity {
         setContentView(R.layout.activity_data);
 
         // Whenever UserItemSource updates it's items, we update the view.
-        userItemSource = new UserItemSource(deviceCallback, this::userItemsDidUpdate);
+        userItemSource = new UserItemSource(this::userItemsDidUpdate);
 
         // Configure buttons
         Button sendMessageButton = findViewById(R.id.sendMessageButton);
+        Button sendDataButton = findViewById(R.id.sendDataButton);
         sendMessageButton.setOnClickListener(v -> sendMessage());
-
-        Button sendLocationButton = findViewById(R.id.sendLocationButton);
-        sendLocationButton.setOnClickListener(v -> sendLocation());
+        sendDataButton.setOnClickListener(v -> sendData());
 
         // Configure status bar view
         SomewearStatusBarView statusBarView = findViewById(R.id.statusBarView);
@@ -61,21 +58,30 @@ public class DataActivity extends FragmentActivity {
         recyclerView.setAdapter(recyclerViewAdapter);
         recyclerView.addItemDecoration(new DividerItemDecoration(recyclerView.getContext(), DividerItemDecoration.VERTICAL));
 
-        // Observe connectivity changes
-        disposable = device.getConnectionState()
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(connectionState -> {
-                    // Hide buttons when not connected
-                    boolean isVisible = connectionState == DeviceConnectionState.Connected;
-                    sendMessageButton.setVisibility(isVisible ? View.VISIBLE : View.INVISIBLE);
-                    sendLocationButton.setVisibility(isVisible ? View.VISIBLE : View.INVISIBLE);
-                });
+        disposable.addAll(
+                // Observe connectivity changes
+                device.getConnectionState()
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(connectionState -> {
+                            // Hide buttons when not connected
+                            boolean isVisible = connectionState == DeviceConnectionState.Connected;
+                            int visibility = isVisible ? View.VISIBLE : View.INVISIBLE;
+                            sendMessageButton.setVisibility(visibility);
+                            sendDataButton.setVisibility(visibility);
+                        }),
+
+                // Observe any updates from the device
+                device.getPayload()
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(payload -> {
+                            userItemSource.createOrUpdateUserItem(payload);
+                        })
+        );
     }
 
     @Override
     protected void onDestroy() {
         // Unregister any callbacks/observers
-        deviceCallback.unregisterListeners();
         disposable.dispose();
         super.onDestroy();
     }
@@ -83,35 +89,39 @@ public class DataActivity extends FragmentActivity {
     private void sendMessage() {
         // Craft a message
         String content = "Hello from space!";
-        String email = "someweardev@gmail.com";
-        Date timestamp = new Date();
-        Message message = new Message(email, "", timestamp, content);
+        EmailAddress email = EmailAddress.build("someweardev@gmail.com");
+        MessagePayload message = MessagePayload.build(content, email);
 
-        // Let's send data over the wire in a structured & condensed format.
-        PackageProto.Package packageProto = ProtoMapper.packageFromMessage(message);
-        sendPackage(packageProto);
+        // Send the message via satellite
+        device.send(message);
+
+        // show outbound payloads as soon as we hand them off to be sent.
+        userItemSource.createOrUpdateUserItem(message);
     }
 
-    private void sendLocation() {
-        // Craft a location
+    private void sendData() {
+        /*
+         * Want to send data that doesn't fit into one of our prebuilt types? You can send any
+         * arbitrary byte array over satellite using DataPayload.
+         *
+         * Note: You can actually create a LocationPayload, this is just a simple example using a
+         *       protobuf to send structured data over the wire.
+         */
         float latitude = 37.7796649f;
         float longitude = -122.4039177f;
         Date timestamp = new Date();
-        Location location = new Location(latitude, longitude, timestamp);
+        LocationProto.Location proto = LocationProto.Location.newBuilder()
+                .setLatitude(latitude)
+                .setLongitude(longitude)
+                .setTimestamp(timestamp.getTime() / 1000)
+                .build();
+        DataPayload data = DataPayload.build(proto.toByteArray());
 
-        // Let's send data over the wire in a structured & condensed format.
-        PackageProto.Package packageProto = ProtoMapper.packageFromLocation(location);
-        sendPackage(packageProto);
-    }
-
-    private void sendPackage(PackageProto.Package packageProto) {
-        byte[] payloadData = packageProto.toByteArray();
-
-        DataPayload payload = DataPayload.build(payloadData);
-        device.sendData(payload);
+        // Send the message via satellite
+        device.send(data);
 
         // show outbound payloads as soon as we hand them off to be sent.
-        userItemSource.createOrUpdateUserItem(payload);
+        userItemSource.createOrUpdateUserItem(data);
     }
 
     private void userItemsDidUpdate(List<UserItem> items) {

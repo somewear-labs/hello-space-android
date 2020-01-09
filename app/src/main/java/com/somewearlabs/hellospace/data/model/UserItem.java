@@ -1,10 +1,11 @@
 package com.somewearlabs.hellospace.data.model;
 
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 
 public class UserItem {
     private int id;
-    @Nullable private Object item;
+    @Nullable
+    private Object item;
     private String status;
 
     UserItem(int id, String status) {
