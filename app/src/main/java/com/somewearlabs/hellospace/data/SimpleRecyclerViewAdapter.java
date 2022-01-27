@@ -11,7 +11,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SimpleRecyclerViewAdapter extends RecyclerView.Adapter {
+public class SimpleRecyclerViewAdapter extends RecyclerView.Adapter<SimpleRecyclerViewAdapter.EventViewHolder> {
     private List<String> items = new ArrayList<>();
 
     public void setItems(List<String> items) {
@@ -20,12 +20,12 @@ public class SimpleRecyclerViewAdapter extends RecyclerView.Adapter {
 
     @NonNull
     @Override
-    public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+    public EventViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         return SimpleRecyclerViewAdapter.EventViewHolder.build(parent);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull EventViewHolder holder, int position) {
         TextView textView = (TextView) holder.itemView;
         textView.setText(items.get(position));
     }
@@ -35,7 +35,7 @@ public class SimpleRecyclerViewAdapter extends RecyclerView.Adapter {
         return items.size();
     }
 
-    private static class EventViewHolder extends RecyclerView.ViewHolder {
+    static class EventViewHolder extends RecyclerView.ViewHolder {
 
         private EventViewHolder(@NonNull View itemView) {
             super(itemView);

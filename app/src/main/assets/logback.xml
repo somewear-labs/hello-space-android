@@ -1,10 +1,10 @@
 <configuration>
     <appender name="logcat" class="ch.qos.logback.classic.android.LogcatAppender">
         <tagEncoder>
-            <pattern>%logger{12}</pattern>
+            <pattern>%logger{0}</pattern>
         </tagEncoder>
         <encoder>
-            <pattern>[%-20thread] %msg</pattern>
+            <pattern>[%-7.7thread] %msg</pattern>
         </encoder>
     </appender>
 

@@ -1,6 +1,7 @@
 package com.somewearlabs.hellospace.data;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 
@@ -9,20 +10,22 @@ import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.somewearlabs.gen.LocationProto;
+import com.google.protobuf.InvalidProtocolBufferException;
+import com.somewear.gen.CoordinateProto;
+import com.somewear.gen.LocationProto;
+import com.somewear.gen.TimestampProto;
 import com.somewearlabs.hellospace.R;
-import com.somewearlabs.hellospace.data.model.UserItem;
-import com.somewearlabs.hellospace.data.model.UserItemSource;
 import com.somewearlabs.somewearcore.api.DataPayload;
 import com.somewearlabs.somewearcore.api.DeviceConnectionState;
+import com.somewearlabs.somewearcore.api.DevicePayload;
 import com.somewearlabs.somewearcore.api.MessagePayload;
 import com.somewearlabs.somewearcore.api.SomewearDevice;
 import com.somewearlabs.somewearcore.common.EmailAddress;
-import com.somewearlabs.somewearui.api.SomewearStatusBarView;
+import com.somewearlabs.somewearui.api.SomewearPillView;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
+import java.util.LinkedHashMap;
 
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
@@ -31,16 +34,13 @@ public class DataActivity extends AppCompatActivity {
 
     private SomewearDevice device = SomewearDevice.getInstance();
     private CompositeDisposable disposable = new CompositeDisposable();
-    private UserItemSource userItemSource;
     private SimpleRecyclerViewAdapter recyclerViewAdapter = new SimpleRecyclerViewAdapter();
+    private LinkedHashMap<Integer, String> payloads = new LinkedHashMap<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_data);
-
-        // Whenever UserItemSource updates it's items, we update the view.
-        userItemSource = new UserItemSource(this::userItemsDidUpdate);
 
         // Configure buttons
         Button sendMessageButton = findViewById(R.id.sendMessageButton);
@@ -49,10 +49,10 @@ public class DataActivity extends AppCompatActivity {
         sendDataButton.setOnClickListener(v -> sendData());
 
         // Configure status bar view
-        SomewearStatusBarView statusBarView = findViewById(R.id.statusBarView);
+        SomewearPillView statusBarView = findViewById(R.id.statusBarView);
         statusBarView.setPresenter(this);
 
-        // Configure UserItem list
+        // Configure payload list
         RecyclerView recyclerView = findViewById(R.id.recyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(recyclerViewAdapter);
@@ -73,9 +73,7 @@ public class DataActivity extends AppCompatActivity {
                 // Observe any updates from the device
                 device.getPayload()
                         .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(payload -> {
-                            userItemSource.createOrUpdateUserItem(payload);
-                        })
+                        .subscribe(this::updatePayloadView)
         );
     }
 
@@ -96,43 +94,68 @@ public class DataActivity extends AppCompatActivity {
         device.send(message);
 
         // show outbound payloads as soon as we hand them off to be sent.
-        userItemSource.createOrUpdateUserItem(message);
+        updatePayloadView(message);
     }
 
     private void sendData() {
         /*
          * Want to send data that doesn't fit into one of our prebuilt types? You can send any
          * arbitrary byte array over satellite using DataPayload.
-         *
-         * Note: You can actually create a LocationPayload, this is just a simple example using a
-         *       protobuf to send structured data over the wire.
          */
         float latitude = 37.7796649f;
         float longitude = -122.4039177f;
-        Date timestamp = new Date();
-        LocationProto.Location proto = LocationProto.Location.newBuilder()
+        long timestampInSeconds = new Date().getTime() / 1000;
+
+        CoordinateProto.CoordinateDto coordinate = CoordinateProto.CoordinateDto.newBuilder()
                 .setLatitude(latitude)
                 .setLongitude(longitude)
-                .setTimestamp(timestamp.getTime() / 1000)
                 .build();
-        DataPayload data = DataPayload.build(proto.toByteArray());
+
+        TimestampProto.Timestamp timestamp = TimestampProto.Timestamp.newBuilder()
+                .setSeconds(timestampInSeconds)
+                .build();
+
+        LocationProto.LocationResponse location = LocationProto.LocationResponse.newBuilder()
+                .setCoordinate(coordinate)
+                .setTimestamp(timestamp)
+                .build();
+        DataPayload data = DataPayload.build(location.toByteArray());
 
         // Send the message via satellite
         device.send(data);
 
         // show outbound payloads as soon as we hand them off to be sent.
-        userItemSource.createOrUpdateUserItem(data);
+        updatePayloadView(data);
     }
 
-    private void userItemsDidUpdate(List<UserItem> items) {
-        // prepare model for presentation
-        List<String> viewModels = new ArrayList<>();
-        for (UserItem p : items) {
-            viewModels.add(p.toString());
+    private void updatePayloadView(DevicePayload payload) {
+        // Format payload content before rendering
+        String content = "";
+
+        if (payload instanceof MessagePayload) {
+            MessagePayload messagePayload = (MessagePayload) payload;
+            content = messagePayload.getContent();
+        } else if (payload instanceof DataPayload) {
+            DataPayload dataPayload = (DataPayload) payload;
+
+            try {
+                LocationProto.LocationResponse locationProto = LocationProto.LocationResponse.parseFrom(dataPayload.getData());
+                CoordinateProto.CoordinateDto coordinate = locationProto.getCoordinate();
+
+                content = coordinate.getLatitude() + ", " + coordinate.getLongitude();
+            } catch (InvalidProtocolBufferException e) {
+                Log.e("UserItemSource", "createOrUpdateUserItem: failed to parse DataPayload", e);
+                return;
+            }
         }
 
+        String formatted = "{ id=" + payload.getParcelId() + ", status='" + payload.getStatus() + '\'' + ", content=" + content + " }";
+
+        // Update view model
+        payloads.put(payload.getParcelId(), formatted);
+
         // update the view
-        recyclerViewAdapter.setItems(viewModels);
+        recyclerViewAdapter.setItems(new ArrayList<String>(payloads.values()));
         recyclerViewAdapter.notifyDataSetChanged();
     }
 }
