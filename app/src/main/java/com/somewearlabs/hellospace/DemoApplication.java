@@ -16,5 +16,6 @@ public class DemoApplication extends Application {
         // Initialize SomewearUI
         SomewearUIProperties properties = new SomewearUIProperties(this);
         SomewearUIConfig.setup(properties);
+        SomewearUIConfig.start();
     }
 }
