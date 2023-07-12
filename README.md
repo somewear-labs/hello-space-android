@@ -54,9 +54,9 @@ public class MyApplication extends Application {
 
 ### Usage
 
-Add the status bar view to your layout so the user scan for a Somewear device and see info such as current battery level.
+Add the status pill view to your layout so the user can pair to a Somewear device and see info such as current battery level.
 ```java
-<com.somewearlabs.somewearui.api.SomewearStatusBarView
+<com.somewearlabs.somewearui.api.SomewearPillView
     android:layout_width="match_parent"
     android:layout_height="wrap_content" />
 ```
