@@ -4,7 +4,7 @@ android {
     compileSdkVersion 31
     defaultConfig {
         applicationId "com.somewearlabs.hellospace"
-        minSdkVersion 21
+        minSdkVersion 23
         targetSdkVersion 31
         versionCode 1
         versionName "1.0"
@@ -30,7 +30,7 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.aar'])
 
     // Somewear
-    implementation ('com.somewearlabs:somewear-ui:0.18.1') {
+    implementation ('com.somewearlabs:somewear-ui:1.1.4') {
         changing = true
     }
 
